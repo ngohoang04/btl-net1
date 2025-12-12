@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MauiApp1.ViewModels"
+             x:Class="MauiApp1.Views.HomePage"
+             Title="Lịch Của Tôi">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Đăng xuất" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <Grid RowDefinitions="Auto, *">
+        <Label Text="Chào mừng bạn quay lại! 👋" 
+               FontSize="20" FontAttributes="Bold" Padding="20" />
+
+        <Label Grid.Row="1" 
+               Text="[Khu vực hiển thị Lịch]" 
+               HorizontalOptions="Center" VerticalOptions="Center" 
+               TextColor="Gray"/>
+    </Grid>
+</ContentPage>
