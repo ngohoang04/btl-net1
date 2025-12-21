@@ -27,28 +27,27 @@
 
                 <VerticalStackLayout Spacing="10">
                     <Label Text="Họ và tên" TextColor="Gray" FontSize="12"/>
-                    <Entry Text="{Binding FullName}" Placeholder="Nhập họ tên của bạn"/>
+                    <Entry Text="{Binding FullName, Mode=TwoWay}" Placeholder="Nhập họ tên của bạn"/>
 
                     <Label Text="Ngày sinh" TextColor="Gray" FontSize="12"/>
-                    <DatePicker Date="{Binding DateOfBirth}" Format="dd/MM/yyyy"/>
+                    <DatePicker Date="{Binding DateOfBirth, Mode=TwoWay}" Format="dd/MM/yyyy"/>
 
                     <Label Text="Múi giờ" TextColor="Gray" FontSize="12"/>
-                    <Picker SelectedItem="{Binding TimeZone}" Title="Chọn múi giờ">
-                        <Picker.ItemsSource>
-                            <x:Array Type="{x:Type x:String}">
-                                <x:String>Asia/Ho_Chi_Minh</x:String>
-                                <x:String>America/New_York</x:String>
-                                <x:String>Europe/London</x:String>
-                                <x:String>Asia/Tokyo</x:String>
-                            </x:Array>
-                        </Picker.ItemsSource>
-                    </Picker>
+
+                    
                 </VerticalStackLayout>
             </Border>
 
-            <Button Text="Lưu Thông Tin" 
-                    Command="{Binding SaveProfileCommand}"
-                    BackgroundColor="#1877F2" FontAttributes="Bold" CornerRadius="10"/>
+            <Grid>
+                <Button Text="Lưu Thông Tin" 
+                        Command="{Binding SaveProfileCommand}"
+                        BackgroundColor="#1877F2" FontAttributes="Bold" CornerRadius="10"/>
+
+                <ActivityIndicator IsRunning="{Binding IsBusy}" 
+                                   IsVisible="{Binding IsBusy}"
+                                   Color="White"
+                                   HorizontalOptions="Center" VerticalOptions="Center"/>
+            </Grid>
 
             <Button Text="Đổi Mật Khẩu" Command="{Binding ChangePasswordCommand}" 
                     BackgroundColor="Orange" TextColor="White" CornerRadius="10"/>

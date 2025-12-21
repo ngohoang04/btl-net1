@@ -12,8 +12,22 @@ public partial class ProfileViewModel : ObservableObject
     private readonly AuthService _authService;
     private readonly UserService _userService;
 
-    // --- KHAI BÁO THỦ CÔNG (Đảm bảo không lỗi) ---
+    // --- TRẠNG THÁI ---
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (SetProperty(ref _isBusy, value))
+            {
+                // Khi IsBusy thay đổi, lệnh SaveProfileCommand sẽ được kiểm tra lại xem có được bấm hay không
+                SaveProfileCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
 
+    // --- DỮ LIỆU ---
     private string _fullName;
     public string FullName
     {
@@ -21,7 +35,7 @@ public partial class ProfileViewModel : ObservableObject
         set => SetProperty(ref _fullName, value);
     }
 
-    private string _userEmail; // Đặt tên khác biến Email của hệ thống
+    private string _userEmail;
     public string UserEmail
     {
         get => _userEmail;
@@ -35,7 +49,7 @@ public partial class ProfileViewModel : ObservableObject
         set => SetProperty(ref _dateOfBirth, value);
     }
 
-    private string _userTimeZone; // Đặt tên khác biến TimeZone của hệ thống
+    private string _userTimeZone;
     public string UserTimeZone
     {
         get => _userTimeZone;
@@ -57,7 +71,6 @@ public partial class ProfileViewModel : ObservableObject
         _authService = authService;
         _userService = userService;
 
-        // Khởi tạo giá trị mặc định
         DateOfBirth = DateTime.Now;
         UserTimeZone = "Asia/Ho_Chi_Minh";
 
@@ -66,85 +79,122 @@ public partial class ProfileViewModel : ObservableObject
 
     private async void LoadUserProfile()
     {
-        var token = await SecureStorage.Default.GetAsync("auth_token");
-        var rawEmail = await SecureStorage.Default.GetAsync("user_email");
+        if (IsBusy) return;
+        IsBusy = true; // Bật trạng thái tải
 
-        if (string.IsNullOrEmpty(rawEmail)) return;
-
-        UserEmail = rawEmail;
-        _currentUserId = rawEmail.Replace(".", "_").Replace("@", "_");
-
-        var profile = await _userService.GetUserProfileAsync(_currentUserId);
-        if (profile != null)
+        try
         {
-            FullName = profile.FullName;
-            DateOfBirth = profile.DateOfBirth;
-            UserTimeZone = profile.TimeZone;
+            var rawEmail = await SecureStorage.Default.GetAsync("user_email");
+            if (string.IsNullOrEmpty(rawEmail)) return;
 
-            if (!string.IsNullOrEmpty(profile.AvatarBase64))
+            UserEmail = rawEmail;
+            _currentUserId = rawEmail.Replace(".", "_").Replace("@", "_");
+
+            var profile = await _userService.GetUserProfileAsync(_currentUserId);
+            if (profile != null)
             {
-                byte[] imageBytes = Convert.FromBase64String(profile.AvatarBase64);
-                AvatarSource = ImageSource.FromStream(() => new MemoryStream(imageBytes));
-                _base64ImageString = profile.AvatarBase64;
+                FullName = profile.FullName;
+                DateOfBirth = profile.DateOfBirth;
+                UserTimeZone = profile.TimeZone;
+
+                if (!string.IsNullOrEmpty(profile.AvatarBase64))
+                {
+                    _base64ImageString = profile.AvatarBase64;
+                    byte[] imageBytes = Convert.FromBase64String(profile.AvatarBase64);
+                    AvatarSource = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Lỗi", "Không tải được hồ sơ: " + ex.Message, "OK");
+        }
+        finally
+        {
+            IsBusy = false; // Tắt trạng thái tải
         }
     }
 
     [RelayCommand]
     async Task PickImage()
     {
-        var result = await MediaPicker.Default.PickPhotoAsync();
-        if (result != null)
+        try
         {
-            var stream = await result.OpenReadAsync();
-            AvatarSource = ImageSource.FromStream(() => stream);
+            var result = await MediaPicker.Default.PickPhotoAsync();
+            if (result != null)
+            {
+                // Đọc luồng để hiển thị
+                using var stream1 = await result.OpenReadAsync();
+                using var memoryStream = new MemoryStream();
+                await stream1.CopyToAsync(memoryStream);
 
-            using var memoryStream = new MemoryStream();
-            var newStream = await result.OpenReadAsync();
-            await newStream.CopyToAsync(memoryStream);
-            byte[] imageBytes = memoryStream.ToArray();
-            _base64ImageString = Convert.ToBase64String(imageBytes);
+                byte[] imageBytes = memoryStream.ToArray();
+
+                // 1. Hiển thị lên UI
+                AvatarSource = ImageSource.FromStream(() => new MemoryStream(imageBytes));
+
+                // 2. Lưu chuỗi Base64 để chuẩn bị upload
+                _base64ImageString = Convert.ToBase64String(imageBytes);
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Lỗi ảnh", ex.Message, "OK");
         }
     }
 
-    [RelayCommand]
+    // Kiểm tra: Chỉ cho phép bấm Lưu khi KHÔNG Busy
+    [RelayCommand(CanExecute = nameof(CanSave))]
     async Task SaveProfile()
     {
-        if (string.IsNullOrEmpty(_currentUserId)) return;
+        if (IsBusy || string.IsNullOrEmpty(_currentUserId)) return;
+        IsBusy = true;
 
-        var userProfile = new UserProfile
+        try
         {
-            UserId = _currentUserId,
-            Email = UserEmail,
-            FullName = FullName,
-            DateOfBirth = DateOfBirth,
-            TimeZone = UserTimeZone,
-            AvatarBase64 = _base64ImageString
-        };
+            var userProfile = new UserProfile
+            {
+                UserId = _currentUserId,
+                Email = UserEmail,
+                FullName = FullName,
+                DateOfBirth = DateOfBirth,
+                TimeZone = UserTimeZone,
+                AvatarBase64 = _base64ImageString
+            };
 
-        var success = await _userService.SaveUserProfileAsync(userProfile);
-        if (success)
-            await Application.Current.MainPage.DisplayAlert("Thành công", "Đã cập nhật hồ sơ!", "OK");
-        else
-            await Application.Current.MainPage.DisplayAlert("Lỗi", "Không thể lưu dữ liệu.", "OK");
+            var success = await _userService.SaveUserProfileAsync(userProfile);
+            if (success)
+                await Application.Current.MainPage.DisplayAlert("Thành công", "Đã cập nhật hồ sơ!", "OK");
+            else
+                await Application.Current.MainPage.DisplayAlert("Lỗi", "Không thể lưu dữ liệu vào hệ thống.", "OK");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Lỗi", ex.Message, "OK");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
+
+    // Điều kiện để nút Lưu sáng lên: Không Busy
+    private bool CanSave() => !IsBusy;
 
     [RelayCommand]
     async Task ChangePassword()
     {
         string newPass = await Application.Current.MainPage.DisplayPromptAsync(
-            "Đổi Mật Khẩu",
-            "Nhập mật khẩu mới:",
-            "Đổi",
-            "Hủy",
-            placeholder: "Mật khẩu mới (tối thiểu 6 ký tự)");
+            "Đổi Mật Khẩu", "Nhập mật khẩu mới:", "Đổi", "Hủy", placeholder: "Min 6 ký tự");
 
         if (!string.IsNullOrWhiteSpace(newPass))
         {
+            IsBusy = true;
             var error = await _authService.ChangePasswordAsync(newPass);
+            IsBusy = false;
 
             if (string.IsNullOrEmpty(error))
-                await Application.Current.MainPage.DisplayAlert("Thành công", "Mật khẩu đã được cập nhật.", "OK");
+                await Application.Current.MainPage.DisplayAlert("Thành công", "Mật khẩu đã đổi.", "OK");
             else
                 await Application.Current.MainPage.DisplayAlert("Lỗi", error, "OK");
         }

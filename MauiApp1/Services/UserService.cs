@@ -7,7 +7,7 @@ namespace MauiApp1.Services;
 public class UserService
 {
     // Dán URL Database bạn vừa copy ở Bước 1 vào đây
-    private const string DatabaseUrl = "https://console.firebase.google.com/u/0/project/smartcalendarapp-b60fb/database/smartcalendarapp-b60fb-default-rtdb/data/~2F";
+    private const string DatabaseUrl = "https://smartcalendarapp-b60fb-default-rtdb.asia-southeast1.firebasedatabase.app";
     private readonly FirebaseClient _firebaseClient;
 
     public UserService()

@@ -44,7 +44,7 @@ public class AuthService
 
             // Lưu token vào máy
             await SecureStorage.Default.SetAsync("auth_token", token);
-
+            await SecureStorage.Default.SetAsync("user_email", email);
             return ""; // Thành công
         }
         catch (Exception ex)
@@ -81,8 +81,23 @@ public class AuthService
 
     public void Logout()
     {
+        // 1. Quan trọng nhất: Xóa token lưu trong máy để lần sau bắt đăng nhập lại
         SecureStorage.Default.Remove("auth_token");
-        _authClient?.SignOut(); // Bản mới có hỗ trợ hàm đăng xuất trực tiếp
+
+        // 2. Cố gắng đăng xuất trên thư viện (nếu có thể)
+        try
+        {
+            // Kiểm tra xem User có tồn tại không trước khi gọi SignOut
+            if (_authClient?.User != null)
+            {
+                _authClient.SignOut();
+            }
+        }
+        catch
+        {
+            // Nếu lỗi (do User null hoặc thư viện lỗi) thì bỏ qua luôn, 
+            // vì ta đã xóa token ở bước 1 rồi là đủ an toàn.
+        }
     }
     public async Task<string> ResetPasswordAsync(string email)
     {

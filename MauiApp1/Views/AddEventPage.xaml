@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiApp1.Views.AddEventPage"
+             Title="Thêm Sự Kiện Mới">
+    <ScrollView>
+        <VerticalStackLayout Spacing="15" Padding="20">
+
+            <Entry Placeholder="Tiêu đề sự kiện" Text="{Binding Title}" FontSize="18" />
+
+            <Editor Placeholder="Mô tả chi tiết..." Text="{Binding Description}" HeightRequest="100" />
+
+            <Entry Placeholder="Địa điểm" Text="{Binding Location}" />
+
+            <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="10">
+                <Label Text="Bắt đầu:" Grid.Row="0" Grid.Column="0" FontAttributes="Bold"/>
+                <DatePicker Date="{Binding StartDate}" Grid.Row="1" Grid.Column="0"/>
+                <TimePicker Time="{Binding StartTime}" Grid.Row="1" Grid.Column="1"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="*, *" RowDefinitions="Auto, Auto" ColumnSpacing="10">
+                <Label Text="Kết thúc:" Grid.Row="0" Grid.Column="0" FontAttributes="Bold"/>
+                <DatePicker Date="{Binding EndDate}" Grid.Row="1" Grid.Column="0"/>
+                <TimePicker Time="{Binding EndTime}" Grid.Row="1" Grid.Column="1"/>
+            </Grid>
+
+            <Label Text="Danh mục:" FontAttributes="Bold"/>
+            <Picker ItemsSource="{Binding Categories}" SelectedItem="{Binding SelectedCategory}" Title="Chọn danh mục"/>
+            <Label Text="Nhắc nhở" FontAttributes="Bold" Margin="0,10,0,0"/>
+            <Frame BorderColor="Gray" Padding="0" CornerRadius="5">
+                <Picker Title="Chọn thời gian nhắc"
+            SelectedItem="{Binding SelectedReminder}">
+                    <Picker.ItemsSource>
+                        <x:Array Type="{x:Type x:String}">
+                            <x:String>Không nhắc</x:String>
+                            <x:String>Trước 15 phút</x:String>
+                            <x:String>Trước 30 phút</x:String>
+                            <x:String>Trước 1 giờ</x:String>
+                            <x:String>Trước 1 ngày</x:String>
+                        </x:Array>
+                    </Picker.ItemsSource>
+                </Picker>
+            </Frame>
+            <Button Text="Lưu Sự Kiện" Command="{Binding SaveEventCommand}" Margin="0,20,0,0"/>
+            <Button Text="Hủy" Command="{Binding CancelCommand}" BackgroundColor="Gray"/>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

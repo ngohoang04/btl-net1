@@ -1,21 +1,76 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:calendar="clr-namespace:Plugin.Maui.Calendar.Controls;assembly=Plugin.Maui.Calendar"
              xmlns:vm="clr-namespace:MauiApp1.ViewModels"
              x:Class="MauiApp1.Views.HomePage"
              Title="Lịch Của Tôi">
 
     <ContentPage.ToolbarItems>
-        <ToolbarItem Text="Đăng xuất" Command="{Binding LogoutCommand}" />
+        <ToolbarItem Text="Thêm sự kiện" Command="{Binding GoToAddEventCommand}" />
+        <ToolbarItem Text="Thoát" Command="{Binding LogoutCommand}" />
     </ContentPage.ToolbarItems>
 
     <Grid RowDefinitions="Auto, *">
-        <Label Text="Chào mừng bạn quay lại! 👋" 
-               FontSize="20" FontAttributes="Bold" Padding="20" />
+        <calendar:Calendar 
+    x:Name="calendarControl"  
+    Grid.Row="0"
+    Events="{Binding Events}"
+    SelectedDate="{Binding SelectedDate}"
+    MonthLabelColor="#1877F2"
+    SelectedDayBackgroundColor="#1877F2"
+    TodayOutlineColor="Red"
+    EventIndicatorType="BottomDot"
+    EventIndicatorColor="#1877F2"
+    
+    DayTappedCommand="{Binding SelectedDateChangedCommand}">
+            <calendar:Calendar.EventIndicatorSelectedColor>
+                <Color>Orange</Color>
+            </calendar:Calendar.EventIndicatorSelectedColor>
 
-        <Label Grid.Row="1" 
-               Text="[Khu vực hiển thị Lịch]" 
-               HorizontalOptions="Center" VerticalOptions="Center" 
-               TextColor="Gray"/>
+        </calendar:Calendar>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding SelectedDateEvents}" EmptyView="Không có sự kiện nào">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="10,5" Padding="10" BorderColor="{Binding Color}">
+                        <Grid ColumnDefinitions="*, Auto">
+
+                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="16"/>
+                                <Label Text="{Binding Description}" FontSize="12" TextColor="Gray"/>
+                                <HorizontalStackLayout Spacing="10">
+                                    <Label Text="{Binding StartTime, StringFormat='{0:HH:mm}'}" TextColor="Blue"/>
+                                    <Label Text="-" />
+                                    <Label Text="{Binding EndTime, StringFormat='{0:HH:mm}'}" TextColor="Blue"/>
+                                    <Label Text="{Binding Category}" TextColor="Orange" FontAttributes="Italic"/>
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout Grid.Column="1" Spacing="5" VerticalOptions="Center">
+
+                                <Button Text="Sửa"
+                            FontSize="10"
+                            HeightRequest="35"
+                            Padding="10,0"
+                            BackgroundColor="#F0AD4E"
+                            TextColor="White"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HomeViewModel}}, Path=EditEventCommand}"
+                            CommandParameter="{Binding .}" />
+
+                                <Button Text="Xóa"
+                            FontSize="10"
+                            HeightRequest="35"
+                            Padding="10,0"
+                            BackgroundColor="#D9534F"
+                            TextColor="White"
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:HomeViewModel}}, Path=DeleteEventCommand}"
+                            CommandParameter="{Binding .}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
     </Grid>
 </ContentPage>

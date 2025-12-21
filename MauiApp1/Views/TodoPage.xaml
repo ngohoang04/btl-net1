@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:MauiApp1.ViewModels"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="MauiApp1.Views.TodoPage"
+             
+             x:Name="todoPage" 
+             
+             Title="Danh Sách Việc Cần Làm">
+
+    <Grid RowDefinitions="Auto, *">
+
+        <Frame Grid.Row="0" Margin="10" Padding="10" BackgroundColor="#F0F0F0">
+            <VerticalStackLayout Spacing="10">
+                <Entry Placeholder="Tên công việc..." Text="{Binding NewTitle}" FontAttributes="Bold"/>
+                <Entry Placeholder="Nội dung chi tiết (tùy chọn)..." Text="{Binding NewContent}" FontSize="12"/>
+
+                <Grid ColumnDefinitions="*, *, Auto">
+                    <DatePicker Grid.Column="0" Date="{Binding NewDeadline}" Format="dd/MM/yyyy"/>
+                    <Picker Grid.Column="1" ItemsSource="{Binding Priorities}" SelectedItem="{Binding NewPriority}" Title="Độ ưu tiên"/>
+
+                    <Button Grid.Column="2" 
+                            Text="{Binding ButtonText}" 
+                            Command="{Binding SaveTodoCommand}" 
+                            BackgroundColor="#1877F2"/>
+                </Grid>
+
+                <Button Text="Hủy Sửa" 
+                        BackgroundColor="Gray" 
+                        TextColor="White"
+                        HeightRequest="35"
+                        Command="{Binding CancelEditCommand}"
+                        IsVisible="{Binding IsEditMode}"/>
+            </VerticalStackLayout>
+        </Frame>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Todos}" Margin="10">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <SwipeView>
+                        <SwipeView.RightItems>
+                            <SwipeItems>
+                                <SwipeItem Text="Xóa" BackgroundColor="Red" 
+                                           Command="{Binding Source={x:Reference todoPage}, Path=BindingContext.DeleteTodoCommand}"
+                                           CommandParameter="{Binding .}"/>
+
+                                <SwipeItem Text="Sửa" BackgroundColor="Orange" 
+                                           Command="{Binding Source={x:Reference todoPage}, Path=BindingContext.PrepareEditCommand}"
+                                           CommandParameter="{Binding .}"/>
+                            </SwipeItems>
+                        </SwipeView.RightItems>
+
+                        <Frame Margin="0,5" Padding="10" BorderColor="LightGray" CornerRadius="8">
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer 
+                                    Command="{Binding Source={x:Reference todoPage}, Path=BindingContext.GoToDetailsCommand}"
+                                    CommandParameter="{Binding .}"/>
+                            </Frame.GestureRecognizers>
+
+                            <Grid ColumnDefinitions="Auto, *, Auto">
+                                <CheckBox Grid.Column="0" IsChecked="{Binding IsCompleted}">
+                                    <CheckBox.Behaviors>
+                                        <toolkit:EventToCommandBehavior EventName="CheckedChanged"
+                                            Command="{Binding Source={x:Reference todoPage}, Path=BindingContext.ToggleCompleteCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                    </CheckBox.Behaviors>
+                                </CheckBox>
+
+                                <VerticalStackLayout Grid.Column="1" Margin="10,0" VerticalOptions="Center">
+                                    <Label Text="{Binding Title}" FontSize="16" FontAttributes="Bold">
+                                        <Label.Triggers>
+                                            <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="True">
+                                                <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                <Setter Property="TextColor" Value="Gray" />
+                                            </DataTrigger>
+                                        </Label.Triggers>
+                                    </Label>
+
+                                    <HorizontalStackLayout Spacing="10">
+                                        <Label Text="{Binding Deadline, StringFormat='Hạn: {0:dd/MM}'}" FontSize="12" TextColor="Gray"/>
+                                        <Label Text="{Binding Priority}" FontSize="12" TextColor="{Binding Color}" FontAttributes="Italic"/>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </SwipeView>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>
